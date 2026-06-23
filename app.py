@@ -1,111 +1,89 @@
 import streamlit as st
 import requests
 from google import genai
-import json
-import os
+import wikipediaapi
 
-st.set_page_config(page_title="FilmIntel AI Enterprise", page_icon="🎬", layout="wide")
-st.title("🎬 FilmIntel AI Enterprise Dashboard")
-st.subheader("Enterprise Edition: Powered by Stable Native Document Intelligence")
+st.set_page_config(page_title="Indian FilmIntel AI", page_icon="🎬", layout="wide")
+
+# Custom Indian Cinema Styling & Header
+st.title("🎬 Indian FilmIntel AI Platform")
+st.subheader("The Ultimate Intelligence Hub for Tollywood, Bollywood & South Indian Cinema")
 st.markdown("---")
 
-# Production Security
+# Secure Keys Processing
 try:
     GOOGLE_API_KEY = st.secrets["GEMINI_API_KEY"]
-    TMDB_API_KEY = st.secrets["TMDB_API_KEY"]
 except:
     GOOGLE_API_KEY = ""
-    TMDB_API_KEY = ""
-
-# 📁 Native Storage Setup: Free, lightweight, and won't crash Python 3.14!
-DB_FILE = "native_movie_db.json"
-
-def load_native_db():
-    if os.path.exists(DB_FILE):
-        with open(DB_FILE, "r") as f:
-            return json.load(f)
-    return {}
-
-def save_native_db(data):
-    with open(DB_FILE, "w") as f:
-        json.dump(data, f)
-
-# Load existing memory records
-movie_memory = load_native_db()
 
 with st.sidebar:
-    st.header("🔑 Configuration")
+    st.header("🔑 System Access")
     user_api_key = GOOGLE_API_KEY if GOOGLE_API_KEY else st.text_input("Enter your Gemini API Key:", type="password")
     
     st.markdown("---")
-    st.header("🧠 Train Your Custom Database")
-    st.write("Paste reviews, articles, or scripts here to expand the AI's knowledge base permanently:")
-    
-    target_movie = st.text_input("Movie Name to Link Text To (e.g., Baahubali):").strip().lower()
-    custom_text = st.text_area("Paste massive text data, background trivia, or script pages here:")
-    
-    if st.button("📥 Inject to Native Database"):
-        if target_movie and custom_text:
-            with st.spinner("Saving data to native brain..."):
-                if target_movie not in movie_memory:
-                    movie_memory[target_movie] = []
-                
-                # Store the custom text chunk neatly linked to that movie name
-                movie_memory[target_movie].append(custom_text)
-                save_native_db(movie_memory)
-                st.success(f"Successfully added custom records to the '{target_movie}' database!")
-        else:
-            st.warning("Please provide both a movie name and text data.")
+    st.info("🎯 **Regional Indian Focus Active:** This LLM agent is heavily optimized to parse Tollywood, Kollywood, Mollywood, Sandalwood, and Bollywood historical records using live Wikipedia open encyclopedias.")
 
-# Main Layout
-movie_input = st.text_input("🎥 Target Movie Name (e.g., Baahubali):")
-question_input = st.text_input("💬 Ask anything (The AI will search the web API AND your custom database memory):")
+# Beautiful LLM Search and Query Interface
+movie_input = st.text_input("🎥 Enter Indian Movie Name (e.g., Baahubali, RRR, Devara, Pokiri):")
+question_input = st.text_input("💬 Ask any tiny or massive question (Cast, Budget, Profit/Loss, Director, OTT Streaming Rights):")
 
-if st.button("🚀 Execute Hybrid Search"):
+if st.button("🚀 Execute Deep Intelligence Retrieval"):
     if not user_api_key:
-        st.error("Missing Gemini API Key!")
+        st.error("Please ensure your Gemini API Key is provided or configured in secrets!")
     elif not movie_input or not question_input:
-        st.warning("Please fill out all fields.")
+        st.warning("Please fill out both fields to trigger the automated web research agent.")
     else:
-        with st.spinner("Synthesizing hybrid data streams..."):
-            lookup_key = movie_input.strip().lower()
+        with st.spinner("🧠 Autonomous Web Agent accessing Indian cinema archives..."):
             
-            # 1. Fetch from our Custom Native Document Database if it exists
-            custom_context = "No custom internal documents or reviews found for this movie in the database."
-            if lookup_key in movie_memory:
-                custom_context = "\n---\n".join(movie_memory[lookup_key])
+            # 🌐 Initialize Wikipedia Open Engine with standard compliance User-Agent
+            wiki_agent = wikipediaapi.Wikipedia(
+                user_agent="FilmIntelIndiaApp/1.0 (contact: admin@filmintelai.com)",
+                language="en"
+            )
             
-            # 2. Fetch basic structural numbers from TMDB API
-            search_url = f"https://api.themoviedb.org/3/search/movie"
-            web_context = "No structural data found on the live web API."
-            if TMDB_API_KEY:
-                try:
-                    res = requests.get(search_url, params={"api_key": TMDB_API_KEY, "query": movie_input}).json()
-                    if res.get('results'):
-                        web_context = str(res['results'][0])
-                except:
-                    pass
+            # Attempt to pull deep unstructured text context directly from Wikipedia
+            page = wiki_agent.page(movie_input)
+            
+            if page.exists():
+                wiki_title = page.title
+                # Grabbing the massive, complete text content (Introduction, Production, Cast, Reception, Box Office, OTT)
+                wiki_content = page.text
+                st.success(f"📈 Found Live Verified Encyclopedia Records for: {wiki_title}!")
+            else:
+                # Fallback search if exact match fails
+                st.warning(f"Exact page match for '{movie_input}' not found. Attempting generic context fallback...")
+                wiki_title = movie_input
+                wiki_content = "No direct encyclopedic text records found. Rely on fallback base model data."
 
-            # 3. Compile everything together for the LLM
+            # 🤖 Structuring the Ultimate Prompt for South Indian & Bollywood Logistics
             prompt = f"""
-            You are an elite, expert film industry analyst. Answer the user's question with deep insights by combining two distinct knowledge records.
+            You are an elite, specialized film analyst who is an expert in Indian Cinema (including Tollywood, Bollywood, and all South Indian industries). 
+            You are tasked with analyzing the user's question with absolute precision.
             
-            [SOURCE 1: LIVE WEB API METADATA]:
-            {web_context}
+            To help you answer with 100% accuracy, here is the complete, live, raw text payload retrieved directly from the open web/encyclopedia records for '{wiki_title}':
             
-            [SOURCE 2: PROPRIETARY CUSTOM DOCUMENTS & REVIEWS]:
-            {custom_context}
+            [LIVE ENCYCLOPEDIA RECORDS]:
+            {wiki_content[:15000]}  # Pulls up to 15,000 characters of dense historical text records
             
             User Question: {question_input}
             
-            Instructions: Provide a comprehensive, data-driven answer. If the information isn't in the web API but is inside the proprietary documents, draw directly from the documents to give a flawless answer.
+            System Instructions:
+            1. Deliver a clean, highly professional executive response that reads like a premium cinematic LLM report.
+            2. Scan the provided records meticulously for every detail regarding cast, crew, production overruns, directors, producers, profit/loss margins, and digital/OTT/satellite rights distributions.
+            3. If the user asks about an outdated or vintage film, locate its historical release and economic context within the text.
+            4. Present numbers (budget, collection) clearly. If the text lists budgets in Crores (INR) or Millions, preserve and explain the conversions clearly.
             """
             
             try:
+                # Booting up the world-class Gemini Brain to synthesize the text
                 client = genai.Client(api_key=user_api_key)
-                response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
-                st.success("Analysis Complete!")
-                st.markdown("### 🤖 Strategic Executive Briefing:")
+                response = client.models.generate_content(
+                    model='gemini-2.5-flash',
+                    contents=prompt
+                )
+                
+                st.markdown("### 🤖 FilmIntel AI Strategic Report:")
                 st.info(response.text)
+                
             except Exception as e:
-                st.error(f"AI Execution Error: {e}")
+                st.error(f"AI Synthesis Module Error: {e}")
