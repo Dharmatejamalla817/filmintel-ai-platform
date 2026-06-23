@@ -1,4 +1,5 @@
 streamlit
 requests
-google-genai
-wikipedia-api
+wikipediaapi
+beautifulsoup4
+groq
