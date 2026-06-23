@@ -1,5 +1,5 @@
 streamlit
 requests
-wikipediaapi
+wikipedia-api
 beautifulsoup4
 groq
