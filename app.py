@@ -1,87 +1,98 @@
 import streamlit as st
 import requests
 from google import genai
+import chromadb
 
 st.set_page_config(page_title="FilmIntel AI Enterprise", page_icon="🎬", layout="wide")
-
 st.title("🎬 FilmIntel AI Enterprise Dashboard")
-st.subheader("Hybrid Intelligence: Live Web Data + Custom Industry Documents")
+st.subheader("Enterprise Edition: Powered by Local Vector Intelligence")
 st.markdown("---")
 
-# 🔐 Production Security: Pulling keys from the cloud environment secrets instead of hardcoding
+# Production Security
 try:
     GOOGLE_API_KEY = st.secrets["GEMINI_API_KEY"]
     TMDB_API_KEY = st.secrets["TMDB_API_KEY"]
 except:
-    # Fallback for local testing if secrets aren't set yet
     GOOGLE_API_KEY = ""
     TMDB_API_KEY = ""
 
-# Sidebar Configuration
+# Initialize Database Client inside the server memory
+@st.cache_resource
+def get_vector_db():
+    # Creates a persistent database folder on the cloud server
+    chroma_client = chromadb.PersistentClient(path="./filminte_vector_db")
+    return chroma_client.get_or_create_collection(name="movie_knowledge")
+
+collection = get_vector_db()
+
 with st.sidebar:
     st.header("🔑 Configuration")
-    # If keys aren't in cloud secrets, let users type them manually
-    if not GOOGLE_API_KEY:
-        user_api_key = st.text_input("Enter your Gemini API Key:", type="password")
-    else:
-        user_api_key = GOOGLE_API_KEY
-        st.success("🔒 System API Key Connected Securely")
-        
-    st.markdown("---")
-    st.header("📂 Upload Knowledge Base")
-    uploaded_file = st.file_uploader("Upload internal notes, scripts, or reviews (.txt format):", type=["txt"])
+    user_api_key = GOOGLE_API_KEY if GOOGLE_API_KEY else st.text_input("Enter your Gemini API Key:", type="password")
     
-    document_contents = ""
-    if uploaded_file is not None:
-        document_contents = uploaded_file.read().decode("utf-8")
-        st.success("📄 Custom Document Loaded!")
+    st.markdown("---")
+    st.header("🧠 Train Your Custom Database")
+    st.write("Paste reviews, articles, or scripts here to permanently expand the AI's knowledge base:")
+    
+    doc_title = st.text_input("Document Label (e.g., Baahubali Trivia):")
+    custom_text = st.text_area("Paste massive text data here:")
+    
+    if st.button("📥 Inject to Vector Database"):
+        if doc_title and custom_text:
+            with st.spinner("Embedding text into vectors..."):
+                # Slicing text into paragraphs and saving it into the vector engine
+                paragraphs = [p.strip() for p in custom_text.split("\n\n") if p.strip()]
+                for i, para in enumerate(paragraphs):
+                    collection.add(
+                        documents=[para],
+                        ids=[f"{doc_title}_{i}"]
+                    )
+                st.success(f"Successfully trained database with {len(paragraphs)} records!")
+        else:
+            st.warning("Please provide both a label and text.")
 
-def fetch_live_web_data(movie_name):
-    if not TMDB_API_KEY:
-        st.error("Missing TMDB API Key configuration.")
-        return None
-    search_url = "https://api.themoviedb.org/3/search/movie"
-    try:
-        response = requests.get(search_url, params={"api_key": TMDB_API_KEY, "query": movie_name}, timeout=15)
-        data = response.json()
-        if not data.get('results'): return None
-        movie_id = data['results'][0]['id']
-        details_url = f"https://api.themoviedb.org/3/movie/{movie_id}"
-        return requests.get(details_url, params={"api_key": TMDB_API_KEY}, timeout=15).json()
-    except:
-        return None
+# Main Interface
+movie_input = st.text_input("🎥 Target Movie Name:")
+question_input = st.text_input("💬 Ask anything (The AI will search the web AND your custom vector database):")
 
-# Main Layout
-col1, col2 = st.columns([1, 1])
-with col1:
-    movie_input = st.text_input("🎥 Target Movie Name:", placeholder="e.g., Baahubali")
-with col2:
-    question_input = st.text_input("💬 Ask your deep industry or script question:", placeholder="e.g., Why did the budget increase?")
-
-if st.button("🚀 Run Deep Evaluation"):
+if st.button("🚀 Execute Hybrid Search"):
     if not user_api_key:
-        st.error("Please provide a valid Gemini API Key!")
+        st.error("Missing Gemini API Key!")
     elif not movie_input or not question_input:
-        st.warning("Please fill out all search and question fields.")
+        st.warning("Please fill out all fields.")
     else:
-        with st.spinner("Processing deep hybrid intelligence queries..."):
-            raw_web_data = fetch_live_web_data(movie_input)
+        with st.spinner("Searching semantic database fields..."):
+            # 1. Query the local Vector Database for matching text blocks based on meaning
+            db_results = collection.query(query_texts=[question_input], n_results=3)
+            vector_context = "\n".join(db_results['documents'][0]) if db_results['documents'] else "No relevant custom records found."
             
-            doc_context = f"\n[UPLOADED DOCUMENT RECORDS]:\n{document_contents}" if document_contents else "\n(No custom document uploaded)"
-            web_context = f"\n[LIVE DATABASE RECORDS]:\n{raw_web_data}" if raw_web_data else "\n(No web data found)"
-            
+            # 2. Fetch basic structural numbers from TMDB
+            search_url = f"https://api.themoviedb.org/3/search/movie"
+            web_context = "No structural data found."
+            if TMDB_API_KEY:
+                try:
+                    res = requests.get(search_url, params={"api_key": TMDB_API_KEY, "query": movie_input}).json()
+                    if res.get('results'):
+                        web_context = str(res['results'][0])
+                except:
+                    pass
+
+            # 3. Compile everything for Gemini
             prompt = f"""
-            You are a premier executive film consultant. Analyze this query using two sources.
+            You are an expert film industry analyst. Answer the user's question by combining live web metadata and our custom vector database records.
+            
+            [LIVE WEB DATABASE ROWS]:
             {web_context}
-            {doc_context}
+            
+            [SEMANTIC VECTOR DATABASE PARAGRAPHS]:
+            {vector_context}
+            
             User Question: {question_input}
-            Instructions: Answer exhaustively. Synthesize web records and custom documents seamlessly.
             """
             
             try:
                 client = genai.Client(api_key=user_api_key)
                 response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
-                st.success("📊 Strategic Analysis Complete!")
+                st.success("Analysis Complete!")
                 st.info(response.text)
-            except Exception as ai_err:
-                st.error(f"AI System Error: {ai_err}")
+            except Exception as e:
+                st.error(f"AI Execution Error: {e}")
