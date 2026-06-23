@@ -62,8 +62,13 @@ with st.sidebar:
     st.markdown("---")
     st.info("⚡ **Groq LPU Engine Active:** Powered by Meta Llama-3 architecture for ultra-high-speed South Indian cinema analysis with zero lag.")
     
-    # Copyright and Legal Block inside Sidebar too
+    # 🌟 Creator Attribution inside the Sidebar
     st.markdown("""
+        <div style='background-color: #1e1e1e; padding: 10px; border-radius: 5px; border-left: 3px solid #ff4b4b;'>
+            <small style='color: #fff; font-weight: bold;'>👨‍💻 Architect Info:</small><br>
+            <small style='color: #ccc;'>Developed & Engineered by:<br><b style='color: #ff4b4b;'>Malla Dharma Teja</b></small>
+        </div>
+        <br>
         <small style='color: #777;'>
         © 2026 FilmIntel India AI.<br>
         All Rights Reserved.<br>
@@ -160,10 +165,10 @@ budgets, and streaming right structures are synthesized in real-time utilizing p
 Box office metrics and OTT distribution statuses fluctuate and should be cross-verified for formal auditing purposes. 
 """)
 
-# Fixed Lookalike Copyright Footer
+# 🌟 Fixed Lookalike Copyright Footer displaying your name
 st.markdown("""
     <div class="custom-footer">
-        © 2026 <b>FilmIntel India AI</b> | Designed for South Indian & Bollywood Cinema Archives | 
-        Data sourced via Open-Web APIs | Powered by <a href="https://groq.com/" target="_blank">Groq LPU Systems</a>
+        © 2026 <b>FilmIntel India AI</b> | Developed by <b>Malla Dharma Teja</b> | 
+        Designed for South Indian Cinema Archives | Powered by <a href="https://groq.com/" target="_blank">Groq LPU Systems</a>
     </div>
 """, unsafe_allow_html=True)
