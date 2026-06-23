@@ -12,7 +12,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# 🖌️ Injection of Professional Custom CSS Branding
+# 🖌️ Custom CSS Branding & Layout Tweaks
 st.markdown("""
     <style>
         #MainMenu {visibility: hidden;}
@@ -42,7 +42,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.title("🎬 Indian FilmIntel AI Platform")
-st.subheader("Llama-Core Edition: Deep Cast & Crew Intelligence Agent")
+st.subheader("Llama-Core Edition: Unified Cinema Intelligence Engine")
 st.markdown("---")
 
 # Load secure system key for Groq
@@ -57,7 +57,7 @@ with st.sidebar:
     user_api_key = st.text_input("Enter personal Groq Key:", type="password") if use_custom_key else SYSTEM_GROQ_KEY
     
     st.markdown("---")
-    st.info("⚡ **Cast Matrix Engine Active:** Now mining real-time salaries, remuneration, trade values, and career analysis trends for the lead cast and crew.")
+    st.info("⚡ **Unified Query Parsing Active:** The single input box dynamically handles movies, web series, actor profiles, or general industry questions.")
     
     # Creator Attribution
     st.markdown("""
@@ -73,74 +73,56 @@ with st.sidebar:
         </small>
     """, unsafe_allow_html=True)
 
-# 🛠️ MULTI-ENGINE PIPELINES
+# 🛠️ MULTI-ENGINE BACKGROUND SCRAIPING MATRICES
 @st.cache_data(show_spinner=False)
-def fetch_wikipedia_data(movie_name):
+def fetch_wikipedia_data(search_term):
     wiki_agent = wikipediaapi.Wikipedia(
         user_agent="FilmIntelIndiaGroq/1.0 (contact: admin@filmintel.com)", language="en"
     )
-    page = wiki_agent.page(movie_name)
+    page = wiki_agent.page(search_term)
     if page.exists():
-        return page.title, page.text[:7000]
-    return movie_name, "No direct encyclopedic records found."
+        return page.title, page.text[:8000]
+    return search_term, "No direct encyclopedic matches found. Rely on web streams and core weights."
 
-def crawl_web_headlines(query):
+@st.cache_data(show_spinner=False)
+def fetch_live_web_intelligence(search_term):
+    # Dynamic search looking for general trade data, reviews, and streaming platform distributions
+    query = f"{search_term} movie web series actor box office budget OTT streaming rights review news"
     url = f"https://html.duckduckgo.com/html/?q={requests.utils.quote(query)}"
     try:
         headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
         res = requests.get(url, headers=headers, timeout=10)
         soup = BeautifulSoup(res.text, "html.parser")
-        snippets = [s.text.strip() for s in soup.find_all('a', class_='result__snippet')[:4]]
-        return "\n".join(snippets) if snippets else "No direct media updates found."
+        snippets = [s.text.strip() for s in soup.find_all('a', class_='result__snippet')[:6]]
+        return "\n".join(snippets) if snippets else "No secondary web headlines indexed."
     except:
-        return "Network source pool timed out."
+        return "Live web research stream temporarily offline."
 
+# Core Execution System
 @st.cache_data(show_spinner=False)
-def fetch_deep_research_data(movie_name, focus_keywords):
-    # Search Stream A: OTT, Budget, Trade Distribution Logistics
-    trade_query = f"{movie_name} movie official box office budget profit loss OTT platform rights news"
-    trade_results = crawl_web_headlines(trade_query)
-    
-    # Search Stream B: Critical Reception, Reviews, and Ratings
-    review_query = f"{movie_name} movie review rating critical reception site:pinkvilla.com OR site:123telugu.com OR site:bollywoodhungama.com"
-    review_results = crawl_web_headlines(review_query)
-    
-    # Search Stream C: Specialized Cast & Crew Remuneration and Production Trade Intel
-    cast_query = f"{movie_name} {focus_keywords} salary remuneration performance reviews career impact news headlines"
-    cast_results = crawl_web_headlines(cast_query)
-    
-    return trade_results, review_results, cast_results
-
-# Deep Execution Core
-@st.cache_data(show_spinner=False)
-def run_groq_ai_analysis(api_key, movie, question, wiki_data, trade_data, review_data, cast_data):
+def run_groq_ai_analysis(api_key, user_query, wiki_data, web_data):
     prompt = f"""
-    You are the absolute premier business consultant and senior research analyst for the Indian Film Industry.
-    Answer the user's question completely using the highly detailed real-time intelligence feeds compiled below.
+    You are an elite, world-class business intelligence analyst and critic specializing in Indian Cinema (Tollywood, Bollywood, Kollywood, and regional OTT platforms).
     
-    [DATAFEED 1: ENCYCLOPEDIC ARCHIVES (CAST, CREW, CORE PLOT)]
+    The user has submitted this request: "{user_query}"
+    
+    To help you provide a flawless, comprehensive answer, your background scrapers have compiled the following real-time web documents:
+    
+    [DOCUMENT 1: ENCYCLOPEDIC ARCHIVES]
     {wiki_data}
     
-    [DATAFEED 2: LIVE MEDIA LOGISTICS (OTT PARTNERS, BUDGETS, LOSS/PROFIT METRICS)]
-    {trade_data}
-    
-    [DATAFEED 3: CRITICAL RECEPTION & REVIEWS (CRITIC REVIEWS, PUBLIC RECEPTION, RATINGS)]
-    {review_data}
-    
-    [DATAFEED 4: CAST INTEL & CAREER REMUNERATION METRICS]
-    {cast_data}
-    
-    User Question: {question}
+    [DOCUMENT 2: LIVE WEB INTELLIGENCE & TRADE PORTALS]
+    {web_data}
     
     Instructions:
-    1. Deliver an elite, deeply analytical report with bold headers, logical sections, and clear bullet points.
-    2. Incorporate explicit findings regarding the cast and crew's details, such as their salary metrics/remuneration rumors for this specific movie, the critical reception of their acting performance, and how this film impacts their theatrical market value.
-    3. Synthesize all information uniformly. Present clear sections analyzing the financial standings (budget vs gross), critical reception/consensus ratings, and details regarding OTT rights.
+    1. Determine the intent of the user's query. If they searched an actor, analyze their career status, upcoming projects, and trade value. If they searched a movie/web series, break down the cast, director, budget, profit/loss parameters, critical reviews, and OTT streaming rights.
+    2. Format the final output layout beautifully using clean, bold headings, bullet points, and clear sections.
+    3. Ensure all numbers (Crores, Millions) and platform mappings (Netflix, Prime Video, Hotstar, Aha, Zee5) are presented clearly based on the provided documents.
     """
     
     try:
         client = Groq(api_key=api_key)
-        chat_completion = client.chat.completions.create(
+        chat_completion = client.chat.create(
             messages=[{"role": "user", "content": prompt}],
             model="llama-3.3-70b-versatile",
             temperature=0.2
@@ -149,32 +131,29 @@ def run_groq_ai_analysis(api_key, movie, question, wiki_data, trade_data, review
     except Exception as e:
         return str(e), False
 
-# Input Layout
-movie_input = st.text_input("🎥 Enter Indian Movie Name (e.g., Baahubali, RRR, Devara, Pushpa):")
-cast_input = st.text_input("👥 Enter Specific Cast/Crew Names to target (e.g., Prabhas, Jr NTR, Allu Arjun, Sukumar, Anirudh):")
-question_input = st.text_input("💬 Ask anything (e.g., How much did the lead cast get paid, how was their performance reviewed, and who bought OTT rights?):")
+# Single Simplified Search Interface
+user_query = st.text_input("🔍 Search for any Indian Movie, Web Series, Actor, or ask a custom question:")
 
-if st.button("🚀 Execute Comprehensive Intel Retrieval"):
+if st.button("🚀 Search Intelligence Network"):
     if not user_api_key:
-        st.error("Please add a valid Groq API Key to proceed!")
-    elif not movie_input or not question_input:
-        st.warning("Please fill out the Movie Name and Question fields.")
+        st.error("Please ensure a valid Groq API Key is active!")
+    elif not user_query:
+        st.warning("Please type something into the search bar to initiate analysis.")
     else:
-        with st.spinner("🧠 Crawling deep-web indices for cast metrics, reviews, budgets, and streaming assets..."):
-            # Execute all scrapers simultaneously
-            wiki_title, wiki_text = fetch_wikipedia_data(movie_input)
-            trade_text, review_text, cast_text = fetch_deep_research_data(movie_input, cast_input)
+        with st.spinner("🧠 Scanning intelligence network and synthesizing live reports..."):
+            # Execute automated context harvesting
+            wiki_title, wiki_text = fetch_wikipedia_data(user_query)
+            web_text = fetch_live_web_intelligence(user_query)
             
-            output, success = run_groq_ai_analysis(
-                user_api_key, movie_input, question_input, wiki_text, trade_text, review_text, cast_text
-            )
+            # Process via Llama Core
+            output, success = run_groq_ai_analysis(user_api_key, user_query, wiki_text, web_text)
             
             if success:
-                st.success(f"📊 Completed In-Depth Master Dossier for {wiki_title}!")
-                st.markdown("### 🤖 FilmIntel Executive Briefing:")
+                st.success(f"📊 Report Generated successfully!")
+                st.markdown("### 🤖 FilmIntel Core Report:")
                 st.info(output)
             else:
-                st.error(f"Groq API Execution Error: {output}")
+                st.error(f"Execution Error: {output}")
 
 # ────────── PUBLIC DISCLAIMER & STICKY FOOTER SECTION ──────────
 st.markdown("<br><br><br><br>", unsafe_allow_html=True)
