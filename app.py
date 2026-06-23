@@ -42,7 +42,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.title("🎬 Indian FilmIntel AI Platform")
-st.subheader("Llama-Core Edition: Deep Multi-Engine Cinema Research Agent")
+st.subheader("Llama-Core Edition: Deep Cast & Crew Intelligence Agent")
 st.markdown("---")
 
 # Load secure system key for Groq
@@ -57,7 +57,7 @@ with st.sidebar:
     user_api_key = st.text_input("Enter personal Groq Key:", type="password") if use_custom_key else SYSTEM_GROQ_KEY
     
     st.markdown("---")
-    st.info("⚡ **Multi-Engine Scraper Active:** Now crawling Wikipedia, active news portals, and critical review archives concurrently.")
+    st.info("⚡ **Cast Matrix Engine Active:** Now mining real-time salaries, remuneration, trade values, and career analysis trends for the lead cast and crew.")
     
     # Creator Attribution
     st.markdown("""
@@ -84,7 +84,6 @@ def fetch_wikipedia_data(movie_name):
         return page.title, page.text[:7000]
     return movie_name, "No direct encyclopedic records found."
 
-# Helper function to crawl DuckDuckGo HTML securely
 def crawl_web_headlines(query):
     url = f"https://html.duckduckgo.com/html/?q={requests.utils.quote(query)}"
     try:
@@ -97,7 +96,7 @@ def crawl_web_headlines(query):
         return "Network source pool timed out."
 
 @st.cache_data(show_spinner=False)
-def fetch_deep_research_data(movie_name):
+def fetch_deep_research_data(movie_name, focus_keywords):
     # Search Stream A: OTT, Budget, Trade Distribution Logistics
     trade_query = f"{movie_name} movie official box office budget profit loss OTT platform rights news"
     trade_results = crawl_web_headlines(trade_query)
@@ -106,11 +105,15 @@ def fetch_deep_research_data(movie_name):
     review_query = f"{movie_name} movie review rating critical reception site:pinkvilla.com OR site:123telugu.com OR site:bollywoodhungama.com"
     review_results = crawl_web_headlines(review_query)
     
-    return trade_results, review_results
+    # Search Stream C: Specialized Cast & Crew Remuneration and Production Trade Intel
+    cast_query = f"{movie_name} {focus_keywords} salary remuneration performance reviews career impact news headlines"
+    cast_results = crawl_web_headlines(cast_query)
+    
+    return trade_results, review_results, cast_results
 
 # Deep Execution Core
 @st.cache_data(show_spinner=False)
-def run_groq_ai_analysis(api_key, movie, question, wiki_data, trade_data, review_data):
+def run_groq_ai_analysis(api_key, movie, question, wiki_data, trade_data, review_data, cast_data):
     prompt = f"""
     You are the absolute premier business consultant and senior research analyst for the Indian Film Industry.
     Answer the user's question completely using the highly detailed real-time intelligence feeds compiled below.
@@ -124,12 +127,15 @@ def run_groq_ai_analysis(api_key, movie, question, wiki_data, trade_data, review
     [DATAFEED 3: CRITICAL RECEPTION & REVIEWS (CRITIC REVIEWS, PUBLIC RECEPTION, RATINGS)]
     {review_data}
     
+    [DATAFEED 4: CAST INTEL & CAREER REMUNERATION METRICS]
+    {cast_data}
+    
     User Question: {question}
     
     Instructions:
     1. Deliver an elite, deeply analytical report with bold headers, logical sections, and clear bullet points.
-    2. Synthesize all three feeds. Give clear summaries of the director/producer profile, financial standings (budget vs gross), critical reception/consensus ratings, and explicit details regarding OTT rights.
-    3. Maintain an authoritative tone. If specific numbers or parameters differ across data feeds, present the data comparatively like a true industry report.
+    2. Incorporate explicit findings regarding the cast and crew's details, such as their salary metrics/remuneration rumors for this specific movie, the critical reception of their acting performance, and how this film impacts their theatrical market value.
+    3. Synthesize all information uniformly. Present clear sections analyzing the financial standings (budget vs gross), critical reception/consensus ratings, and details regarding OTT rights.
     """
     
     try:
@@ -145,25 +151,26 @@ def run_groq_ai_analysis(api_key, movie, question, wiki_data, trade_data, review
 
 # Input Layout
 movie_input = st.text_input("🎥 Enter Indian Movie Name (e.g., Baahubali, RRR, Devara, Pushpa):")
-question_input = st.text_input("💬 Ask anything (e.g., Give me a full analysis of its critical reception, box office status, and OTT partners):")
+cast_input = st.text_input("👥 Enter Specific Cast/Crew Names to target (e.g., Prabhas, Jr NTR, Allu Arjun, Sukumar, Anirudh):")
+question_input = st.text_input("💬 Ask anything (e.g., How much did the lead cast get paid, how was their performance reviewed, and who bought OTT rights?):")
 
-if st.button("🚀 Execute Deep Intelligence Retrieval"):
+if st.button("🚀 Execute Comprehensive Intel Retrieval"):
     if not user_api_key:
         st.error("Please add a valid Groq API Key to proceed!")
     elif not movie_input or not question_input:
-        st.warning("Please fill out both search parameters.")
+        st.warning("Please fill out the Movie Name and Question fields.")
     else:
-        with st.spinner("🧠 Gathering and synthesizing encyclopedias, reviews, and trade papers..."):
+        with st.spinner("🧠 Crawling deep-web indices for cast metrics, reviews, budgets, and streaming assets..."):
             # Execute all scrapers simultaneously
             wiki_title, wiki_text = fetch_wikipedia_data(movie_input)
-            trade_text, review_text = fetch_deep_research_data(movie_input)
+            trade_text, review_text, cast_text = fetch_deep_research_data(movie_input, cast_input)
             
             output, success = run_groq_ai_analysis(
-                user_api_key, movie_input, question_input, wiki_text, trade_text, review_text
+                user_api_key, movie_input, question_input, wiki_text, trade_text, review_text, cast_text
             )
             
             if success:
-                st.success(f"📊 Completed In-Depth Intelligence Dossier for {wiki_title}!")
+                st.success(f"📊 Completed In-Depth Master Dossier for {wiki_title}!")
                 st.markdown("### 🤖 FilmIntel Executive Briefing:")
                 st.info(output)
             else:
