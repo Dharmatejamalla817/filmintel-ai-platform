@@ -57,7 +57,7 @@ with st.sidebar:
     user_api_key = st.text_input("Enter personal Groq Key:", type="password") if use_custom_key else SYSTEM_GROQ_KEY
     
     st.markdown("---")
-    st.info("⚡ **Unified Query Parsing Active:** The single input box dynamically handles movies, web series, actor profiles, or general industry questions.")
+    st.info("⚡ **Smart Query Extraction Enabled:** The engine automatically filters out user questions to locate clean Wikipedia page assets.")
     
     # Creator Attribution
     st.markdown("""
@@ -73,6 +73,25 @@ with st.sidebar:
         </small>
     """, unsafe_allow_html=True)
 
+# 🧠 STEP 1: Fast Query Parser using Groq to isolate the exact subject name
+def extract_clean_subject(api_key, raw_query):
+    try:
+        client = Groq(api_key=api_key)
+        prompt = f"""Isolate ONLY the main Indian movie, web series, or actor name from this query: "{raw_query}".
+        Respond with ONLY the exact proper noun title/name. No explanations, no symbols, no formatting.
+        Example Input: "give me the cast details of the movie pushpa 2 rule"
+        Example Output: Pushpa 2: The Rule"""
+        
+        completion = client.chat.completions.create(
+            messages=[{"role": "user", "content": prompt}],
+            model="llama-3.3-70b-versatile",
+            temperature=0.0,
+            max_tokens=20
+        )
+        return completion.choices[0].message.content.strip()
+    except:
+        return raw_query
+
 # 🛠️ MULTI-ENGINE BACKGROUND SCRAPING MATRICES
 @st.cache_data(show_spinner=False)
 def fetch_wikipedia_data(search_term):
@@ -81,8 +100,8 @@ def fetch_wikipedia_data(search_term):
     )
     page = wiki_agent.page(search_term)
     if page.exists():
-        return page.title, page.text[:8000]
-    return search_term, "No direct encyclopedic matches found. Rely on web streams and core weights."
+        return page.title, page.text[:9000]
+    return search_term, "No direct encyclopedic matches found. Rely heavily on trade streams."
 
 @st.cache_data(show_spinner=False)
 def fetch_live_web_intelligence(search_term):
@@ -99,33 +118,33 @@ def fetch_live_web_intelligence(search_term):
 
 # Core Execution System
 @st.cache_data(show_spinner=False)
-def run_groq_ai_analysis(api_key, user_query, wiki_data, web_data):
+def run_groq_ai_analysis(api_key, user_query, wiki_title, wiki_data, web_data):
     prompt = f"""
     You are an elite, world-class business intelligence analyst and critic specializing in Indian Cinema (Tollywood, Bollywood, Kollywood, and regional OTT platforms).
     
-    The user has submitted this request: "{user_query}"
+    The user wants to know about: "{user_query}"
+    The context data gathered belongs to the verified asset: "{wiki_title}"
     
-    To help you provide a flawless, comprehensive answer, your background scrapers have compiled the following real-time web documents:
+    To help you provide a flawless, comprehensive answer with ZERO guessing, use these real-time web documents:
     
-    [DOCUMENT 1: ENCYCLOPEDIC ARCHIVES]
+    [DOCUMENT 1: ENCYCLOPEDIC ARCHIVES FOR {wiki_title}]
     {wiki_data}
     
     [DOCUMENT 2: LIVE WEB INTELLIGENCE & TRADE PORTALS]
     {web_data}
     
     Instructions:
-    1. Determine the intent of the user's query. If they searched an actor, analyze their career status, upcoming projects, and trade value. If they searched a movie/web series, break down the cast, director, budget, profit/loss parameters, critical reviews, and OTT streaming rights.
+    1. Base your answer STRICTLY on the facts inside the provided documents. If specific cast data, crew info, budgets, or OTT platform partnerships are available, map them completely. Do not guess or hallucinate.
     2. Format the final output layout beautifully using clean, bold headings, bullet points, and clear sections.
-    3. Ensure all numbers (Crores, Millions) and platform mappings (Netflix, Prime Video, Hotstar, Aha, Zee5) are presented clearly based on the provided documents.
+    3. Ensure all figures (Crores, Millions) and platform mappings (Netflix, Prime Video, Hotstar, Aha, Zee5) are clearly highlighted.
     """
     
     try:
         client = Groq(api_key=api_key)
-        # Fixed syntax bug here: changed .chat.create to .chat.completions.create
         chat_completion = client.chat.completions.create(
             messages=[{"role": "user", "content": prompt}],
             model="llama-3.3-70b-versatile",
-            temperature=0.2
+            temperature=0.1
         )
         return chat_completion.choices[0].message.content, True
     except Exception as e:
@@ -141,15 +160,18 @@ if st.button("🚀 Search Intelligence Network"):
         st.warning("Please type something into the search bar to initiate analysis.")
     else:
         with st.spinner("🧠 Scanning intelligence network and synthesizing live reports..."):
-            # Execute automated context harvesting
-            wiki_title, wiki_text = fetch_wikipedia_data(user_query)
-            web_text = fetch_live_web_intelligence(user_query)
+            # Step 1: Automatically extract the precise title to search
+            clean_subject = extract_clean_subject(user_api_key, user_query)
             
-            # Process via Llama Core
-            output, success = run_groq_ai_analysis(user_api_key, user_query, wiki_text, web_text)
+            # Step 2: Execute automated context harvesting with the clean name
+            wiki_title, wiki_text = fetch_wikipedia_data(clean_subject)
+            web_text = fetch_live_web_intelligence(clean_subject)
+            
+            # Step 3: Process via Llama Core
+            output, success = run_groq_ai_analysis(user_api_key, user_query, wiki_title, wiki_text, web_text)
             
             if success:
-                st.success(f"📊 Report Generated successfully!")
+                st.success(f"📊 Deep Intelligence Report for {wiki_title} Generated!")
                 st.markdown("### 🤖 FilmIntel Core Report:")
                 st.info(output)
             else:
