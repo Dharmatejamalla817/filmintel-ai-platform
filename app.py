@@ -101,7 +101,6 @@ def fetch_wikipedia_dossier(search_term):
     )
     page = wiki_agent.page(search_term)
     if page.exists():
-        # Pulling a much deeper slice of data (12,000 chars) to capture full cast tables & box office text
         return page.title, page.text[:12000]
     return search_term, "No direct encyclopedic records found."
 
@@ -118,11 +117,9 @@ def execute_targeted_crawl(query):
 
 @st.cache_data(show_spinner=False)
 def gather_deep_trade_intel(subject):
-    # Search Loop 1: Core Financials & Rights
     q1 = f"{subject} movie box office collections budget profit loss OTT streaming rights partner news"
     trade_intel = execute_targeted_crawl(q1)
     
-    # Search Loop 2: Indian Trade Outlets Critic Aggregation
     q2 = f"{subject} review rating critical response analysis site:123telugu.com OR site:pinkvilla.com OR site:bollywoodhungama.com"
     critic_intel = execute_targeted_crawl(q2)
     
@@ -189,9 +186,9 @@ if st.button("🚀 Run Comprehensive Intelligence Scan"):
             wiki_title, wiki_text = fetch_wikipedia_dossier(subject)
             trade_text, critic_text = gather_deep_trade_intel(subject)
             
-            # Step 3: Deep Synthesis
+            # Step 3: Deep Synthesis (FIXED: passing wiki_text instead of wiki_title into the text block parameter)
             report, success = run_agent_synthesis(
-                user_api_key, user_query, wiki_title, trade_text, critic_text
+                user_api_key, user_query, wiki_title, wiki_text, trade_text, critic_text
             )
             
             if success:
