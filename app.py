@@ -73,7 +73,7 @@ with st.sidebar:
         </small>
     """, unsafe_allow_html=True)
 
-# 🛠️ MULTI-ENGINE BACKGROUND SCRAIPING MATRICES
+# 🛠️ MULTI-ENGINE BACKGROUND SCRAPING MATRICES
 @st.cache_data(show_spinner=False)
 def fetch_wikipedia_data(search_term):
     wiki_agent = wikipediaapi.Wikipedia(
@@ -86,7 +86,6 @@ def fetch_wikipedia_data(search_term):
 
 @st.cache_data(show_spinner=False)
 def fetch_live_web_intelligence(search_term):
-    # Dynamic search looking for general trade data, reviews, and streaming platform distributions
     query = f"{search_term} movie web series actor box office budget OTT streaming rights review news"
     url = f"https://html.duckduckgo.com/html/?q={requests.utils.quote(query)}"
     try:
@@ -122,7 +121,8 @@ def run_groq_ai_analysis(api_key, user_query, wiki_data, web_data):
     
     try:
         client = Groq(api_key=api_key)
-        chat_completion = client.chat.create(
+        # Fixed syntax bug here: changed .chat.create to .chat.completions.create
+        chat_completion = client.chat.completions.create(
             messages=[{"role": "user", "content": prompt}],
             model="llama-3.3-70b-versatile",
             temperature=0.2
