@@ -15,12 +15,10 @@ st.set_page_config(
 # 🖌️ Injection of Professional Custom CSS Branding
 st.markdown("""
     <style>
-        /* Hide default Streamlit footer and menus for a clean layout */
         #MainMenu {visibility: hidden;}
         footer {visibility: hidden;}
         header {visibility: hidden;}
         
-        /* Custom Footer Styling */
         .custom-footer {
             position: fixed;
             left: 0;
@@ -43,9 +41,8 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Main Application Headers
 st.title("🎬 Indian FilmIntel AI Platform")
-st.subheader("Llama-Core Edition: High-Speed Autonomous Cinema Agent")
+st.subheader("Llama-Core Edition: Deep Multi-Engine Cinema Research Agent")
 st.markdown("---")
 
 # Load secure system key for Groq
@@ -60,9 +57,9 @@ with st.sidebar:
     user_api_key = st.text_input("Enter personal Groq Key:", type="password") if use_custom_key else SYSTEM_GROQ_KEY
     
     st.markdown("---")
-    st.info("⚡ **Groq LPU Engine Active:** Powered by Meta Llama-3 architecture for ultra-high-speed South Indian cinema analysis with zero lag.")
+    st.info("⚡ **Multi-Engine Scraper Active:** Now crawling Wikipedia, active news portals, and critical review archives concurrently.")
     
-    # 🌟 Creator Attribution inside the Sidebar
+    # Creator Attribution
     st.markdown("""
         <div style='background-color: #1e1e1e; padding: 10px; border-radius: 5px; border-left: 3px solid #ff4b4b;'>
             <small style='color: #fff; font-weight: bold;'>👨‍💻 Architect Info:</small><br>
@@ -76,7 +73,7 @@ with st.sidebar:
         </small>
     """, unsafe_allow_html=True)
 
-# Local caching setups to protect performance limits
+# 🛠️ MULTI-ENGINE PIPELINES
 @st.cache_data(show_spinner=False)
 def fetch_wikipedia_data(movie_name):
     wiki_agent = wikipediaapi.Wikipedia(
@@ -84,39 +81,55 @@ def fetch_wikipedia_data(movie_name):
     )
     page = wiki_agent.page(movie_name)
     if page.exists():
-        return page.title, page.text[:8000]
+        return page.title, page.text[:7000]
     return movie_name, "No direct encyclopedic records found."
 
-@st.cache_data(show_spinner=False)
-def fetch_live_ott_news(movie_name):
-    search_query = f"{movie_name} official digital streaming rights OTT platform news"
-    url = f"https://html.duckduckgo.com/html/?q={requests.utils.quote(search_query)}"
+# Helper function to crawl DuckDuckGo HTML securely
+def crawl_web_headlines(query):
+    url = f"https://html.duckduckgo.com/html/?q={requests.utils.quote(query)}"
     try:
-        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
         res = requests.get(url, headers=headers, timeout=10)
         soup = BeautifulSoup(res.text, "html.parser")
         snippets = [s.text.strip() for s in soup.find_all('a', class_='result__snippet')[:4]]
-        return "\n".join(snippets) if snippets else "No direct active OTT headlines found."
+        return "\n".join(snippets) if snippets else "No direct media updates found."
     except:
-        return "Live web research stream temporarily unavailable."
+        return "Network source pool timed out."
 
-# Execution Core using the official Groq client
 @st.cache_data(show_spinner=False)
-def run_groq_ai_analysis(api_key, movie, question, wiki_data, ott_data):
-    prompt = f"""
-    You are the absolute premier business consultant for the Indian Film Industry (Tollywood, Bollywood, and South Indian cinema).
-    Answer the user's question completely using the two real-time text sources pulled from the internet.
+def fetch_deep_research_data(movie_name):
+    # Search Stream A: OTT, Budget, Trade Distribution Logistics
+    trade_query = f"{movie_name} movie official box office budget profit loss OTT platform rights news"
+    trade_results = crawl_web_headlines(trade_query)
     
-    [SOURCE 1: WIKIPEDIA ARCHIVES]:
+    # Search Stream B: Critical Reception, Reviews, and Ratings
+    review_query = f"{movie_name} movie review rating critical reception site:pinkvilla.com OR site:123telugu.com OR site:bollywoodhungama.com"
+    review_results = crawl_web_headlines(review_query)
+    
+    return trade_results, review_results
+
+# Deep Execution Core
+@st.cache_data(show_spinner=False)
+def run_groq_ai_analysis(api_key, movie, question, wiki_data, trade_data, review_data):
+    prompt = f"""
+    You are the absolute premier business consultant and senior research analyst for the Indian Film Industry.
+    Answer the user's question completely using the highly detailed real-time intelligence feeds compiled below.
+    
+    [DATAFEED 1: ENCYCLOPEDIC ARCHIVES (CAST, CREW, CORE PLOT)]
     {wiki_data}
     
-    [SOURCE 2: LIVE WEB NEWS SNIPPETS FOR OTT RIGHTS]:
-    {ott_data}
+    [DATAFEED 2: LIVE MEDIA LOGISTICS (OTT PARTNERS, BUDGETS, LOSS/PROFIT METRICS)]
+    {trade_data}
+    
+    [DATAFEED 3: CRITICAL RECEPTION & REVIEWS (CRITIC REVIEWS, PUBLIC RECEPTION, RATINGS)]
+    {review_data}
     
     User Question: {question}
     
     Instructions:
-    Deliver a highly polished report using clear headings and bullet points. Focus heavily on specifying the director, producer, budget structures, final box office profit/loss, and explicitly state which digital platform (Netflix, Prime, Hotstar, Aha, Zee5, etc.) owns the OTT streaming rights based on the sources.
+    1. Deliver an elite, deeply analytical report with bold headers, logical sections, and clear bullet points.
+    2. Synthesize all three feeds. Give clear summaries of the director/producer profile, financial standings (budget vs gross), critical reception/consensus ratings, and explicit details regarding OTT rights.
+    3. Maintain an authoritative tone. If specific numbers or parameters differ across data feeds, present the data comparatively like a true industry report.
     """
     
     try:
@@ -130,42 +143,41 @@ def run_groq_ai_analysis(api_key, movie, question, wiki_data, ott_data):
     except Exception as e:
         return str(e), False
 
-# Layout Elements
+# Input Layout
 movie_input = st.text_input("🎥 Enter Indian Movie Name (e.g., Baahubali, RRR, Devara, Pushpa):")
-question_input = st.text_input("💬 Ask anything (e.g., Give me a full profit breakdown and who bought OTT rights?):")
+question_input = st.text_input("💬 Ask anything (e.g., Give me a full analysis of its critical reception, box office status, and OTT partners):")
 
-if st.button("🚀 Execute Llama Retrieval"):
+if st.button("🚀 Execute Deep Intelligence Retrieval"):
     if not user_api_key:
-        st.error("Please add a Groq API Key to proceed!")
+        st.error("Please add a valid Groq API Key to proceed!")
     elif not movie_input or not question_input:
-        st.warning("Please fill out both search entry slots.")
+        st.warning("Please fill out both search parameters.")
     else:
-        with st.spinner("🧠 Llama parsing real-time regional data matrices..."):
+        with st.spinner("🧠 Gathering and synthesizing encyclopedias, reviews, and trade papers..."):
+            # Execute all scrapers simultaneously
             wiki_title, wiki_text = fetch_wikipedia_data(movie_input)
-            ott_news_text = fetch_live_ott_news(movie_input)
+            trade_text, review_text = fetch_deep_research_data(movie_input)
             
             output, success = run_groq_ai_analysis(
-                user_api_key, movie_input, question_input, wiki_text, ott_news_text
+                user_api_key, movie_input, question_input, wiki_text, trade_text, review_text
             )
             
             if success:
-                st.success(f"📊 Completed Analysis for {wiki_title}!")
+                st.success(f"📊 Completed In-Depth Intelligence Dossier for {wiki_title}!")
                 st.markdown("### 🤖 FilmIntel Executive Briefing:")
                 st.info(output)
             else:
                 st.error(f"Groq API Execution Error: {output}")
 
 # ────────── PUBLIC DISCLAIMER & STICKY FOOTER SECTION ──────────
-st.markdown("<br><br><br><br>", unsafe_allow_html=True) # Adds safe buffer spacing
+st.markdown("<br><br><br><br>", unsafe_allow_html=True)
 
-# Professional Enterprise Legal Footnote
 st.caption("""
 ⚠️ **Enterprise Disclaimer:** This application acts as an autonomous AI compilation engine. All research reports, financial insights, 
 budgets, and streaming right structures are synthesized in real-time utilizing public domain encyclopedia records and indexed web news aggregates. 
 Box office metrics and OTT distribution statuses fluctuate and should be cross-verified for formal auditing purposes. 
 """)
 
-# 🌟 Fixed Lookalike Copyright Footer displaying your name
 st.markdown("""
     <div class="custom-footer">
         © 2026 <b>FilmIntel India AI</b> | Developed by <b>Malla Dharma Teja</b> | 
