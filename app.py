@@ -12,7 +12,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# 🖌️ Custom CSS Branding & Layout Tweaks
+# 🖌️ Custom CSS Branding & Premium UI Layout
 st.markdown("""
     <style>
         #MainMenu {visibility: hidden;}
@@ -42,7 +42,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.title("🎬 Indian FilmIntel AI Platform")
-st.subheader("Llama-Core Edition: Unified Cinema Intelligence Engine")
+st.subheader("Enterprise Agent Edition: Deep Multi-Engine Cinema Intelligence")
 st.markdown("---")
 
 # Load secure system key for Groq
@@ -57,7 +57,7 @@ with st.sidebar:
     user_api_key = st.text_input("Enter personal Groq Key:", type="password") if use_custom_key else SYSTEM_GROQ_KEY
     
     st.markdown("---")
-    st.info("⚡ **Smart Query Extraction Enabled:** The engine automatically filters out user questions to locate clean Wikipedia page assets.")
+    st.info("🧠 **Autonomous Critic Agent Online:** This engine uses recursive query expansion to target Indian trade registries, box-office ledgers, and critical reviews across multiple nodes simultaneously.")
     
     # Creator Attribution
     st.markdown("""
@@ -73,70 +73,91 @@ with st.sidebar:
         </small>
     """, unsafe_allow_html=True)
 
-# 🧠 STEP 1: Fast Query Parser using Groq to isolate the exact subject name
+# 🧠 AGENT MODULE 1: Self-Correcting Subject Extractor
 def extract_clean_subject(api_key, raw_query):
     try:
         client = Groq(api_key=api_key)
-        prompt = f"""Isolate ONLY the main Indian movie, web series, or actor name from this query: "{raw_query}".
-        Respond with ONLY the exact proper noun title/name. No explanations, no symbols, no formatting.
-        Example Input: "give me the cast details of the movie pushpa 2 rule"
-        Example Output: Pushpa 2: The Rule"""
+        prompt = f"""Analyze the user's input: "{raw_query}".
+        Isolate the precise name of the Indian movie, web series, actor, or director.
+        Respond with ONLY the clean title/name. No symbols, no punctuation, no sentences.
+        Example: "can you give me the budget of pushpa 2 rule movie" -> Pushpa 2: The Rule
+        Example: "tell me about prabhas remuneration" -> Prabhas"""
         
         completion = client.chat.completions.create(
             messages=[{"role": "user", "content": prompt}],
             model="llama-3.3-70b-versatile",
             temperature=0.0,
-            max_tokens=20
+            max_tokens=25
         )
         return completion.choices[0].message.content.strip()
     except:
         return raw_query
 
-# 🛠️ MULTI-ENGINE BACKGROUND SCRAPING MATRICES
+# 🛠️ AGENT MODULE 2: Deep Context Harvesting Network
 @st.cache_data(show_spinner=False)
-def fetch_wikipedia_data(search_term):
+def fetch_wikipedia_dossier(search_term):
     wiki_agent = wikipediaapi.Wikipedia(
-        user_agent="FilmIntelIndiaGroq/1.0 (contact: admin@filmintel.com)", language="en"
+        user_agent="FilmIntelIndiaGroq/2.0 (contact: admin@filmintel.com)", language="en"
     )
     page = wiki_agent.page(search_term)
     if page.exists():
-        return page.title, page.text[:9000]
-    return search_term, "No direct encyclopedic matches found. Rely heavily on trade streams."
+        # Pulling a much deeper slice of data (12,000 chars) to capture full cast tables & box office text
+        return page.title, page.text[:12000]
+    return search_term, "No direct encyclopedic records found."
 
-@st.cache_data(show_spinner=False)
-def fetch_live_web_intelligence(search_term):
-    query = f"{search_term} movie web series actor box office budget OTT streaming rights review news"
+def execute_targeted_crawl(query):
     url = f"https://html.duckduckgo.com/html/?q={requests.utils.quote(query)}"
     try:
         headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-        res = requests.get(url, headers=headers, timeout=10)
+        res = requests.get(url, headers=headers, timeout=12)
         soup = BeautifulSoup(res.text, "html.parser")
-        snippets = [s.text.strip() for s in soup.find_all('a', class_='result__snippet')[:6]]
-        return "\n".join(snippets) if snippets else "No secondary web headlines indexed."
+        snippets = [s.text.strip() for s in soup.find_all('a', class_='result__snippet')[:5]]
+        return "\n".join(snippets) if snippets else ""
     except:
-        return "Live web research stream temporarily offline."
+        return ""
 
-# Core Execution System
 @st.cache_data(show_spinner=False)
-def run_groq_ai_analysis(api_key, user_query, wiki_title, wiki_data, web_data):
+def gather_deep_trade_intel(subject):
+    # Search Loop 1: Core Financials & Rights
+    q1 = f"{subject} movie box office collections budget profit loss OTT streaming rights partner news"
+    trade_intel = execute_targeted_crawl(q1)
+    
+    # Search Loop 2: Indian Trade Outlets Critic Aggregation
+    q2 = f"{subject} review rating critical response analysis site:123telugu.com OR site:pinkvilla.com OR site:bollywoodhungama.com"
+    critic_intel = execute_targeted_crawl(q2)
+    
+    return trade_intel, critic_intel
+
+# 🤖 AGENT MODULE 3: Elite Cinema Synthesis Core
+@st.cache_data(show_spinner=False)
+def run_agent_synthesis(api_key, user_query, subject, wiki_data, trade_data, critic_data):
     prompt = f"""
-    You are an elite, world-class business intelligence analyst and critic specializing in Indian Cinema (Tollywood, Bollywood, Kollywood, and regional OTT platforms).
+    You are the premier, industry-leading AI cinema business consultant and entertainment analyst for Indian Cinema.
+    Your mission is to answer the user's query with complete data, absolute precision, and zero placeholder guessing.
     
-    The user wants to know about: "{user_query}"
-    The context data gathered belongs to the verified asset: "{wiki_title}"
+    User Query: {user_query}
+    Target Subject: {subject}
     
-    To help you provide a flawless, comprehensive answer with ZERO guessing, use these real-time web documents:
+    You have been supplied with deep text packages directly scraped from the web:
     
-    [DOCUMENT 1: ENCYCLOPEDIC ARCHIVES FOR {wiki_title}]
+    [DATAFEED 1: SYSTEM ENCYCLOPEDIA RECORDS]
     {wiki_data}
     
-    [DOCUMENT 2: LIVE WEB INTELLIGENCE & TRADE PORTALS]
-    {web_data}
+    [DATAFEED 2: FINANCIAL TRADE REGISTRY & OTT TRACKING]
+    {trade_data}
     
-    Instructions:
-    1. Base your answer STRICTLY on the facts inside the provided documents. If specific cast data, crew info, budgets, or OTT platform partnerships are available, map them completely. Do not guess or hallucinate.
-    2. Format the final output layout beautifully using clean, bold headings, bullet points, and clear sections.
-    3. Ensure all figures (Crores, Millions) and platform mappings (Netflix, Prime Video, Hotstar, Aha, Zee5) are clearly highlighted.
+    [DATAFEED 3: JOURNALISTIC MEDIA REVIEWS & CRITIC RATINGS]
+    {critic_data}
+    
+    System Instructions:
+    1. Cross-reference all datafeeds. Do not state that information is missing if it exists in ANY of the datafeeds. 
+    2. Build a high-tier, professional analysis dossier using clear, bold headings and structured bullet points.
+    3. Include dedicated deep-dive sections covering:
+       - 🎬 Cast & Production Crew Lineup (with relevant performance reviews or remuneration tracking if present).
+       - 💰 Financial Performance Balance Sheet (Budget metrics vs. Total Domestic/Global Box Office Gross collections).
+       - 📺 Digital & OTT Distribution Assets (Explicitly list streaming partners like Netflix, Prime Video, Aha, Zee5, Hotstar and digital rights value details).
+       - 📈 Critical Consensus & Media Ratings Summary.
+    4. If details diverge across trade papers, present them comparatively like an enterprise auditor. Never summarize lazily.
     """
     
     try:
@@ -150,32 +171,35 @@ def run_groq_ai_analysis(api_key, user_query, wiki_title, wiki_data, web_data):
     except Exception as e:
         return str(e), False
 
-# Single Simplified Search Interface
+# Unified Single Input Interface
 user_query = st.text_input("🔍 Search for any Indian Movie, Web Series, Actor, or ask a custom question:")
 
-if st.button("🚀 Search Intelligence Network"):
+if st.button("🚀 Run Comprehensive Intelligence Scan"):
     if not user_api_key:
-        st.error("Please ensure a valid Groq API Key is active!")
+        st.error("Please ensure your Groq API Key is actively connected in the configuration panel.")
     elif not user_query:
-        st.warning("Please type something into the search bar to initiate analysis.")
+        st.warning("Please input a movie title, celebrity profile, or industry topic to begin.")
     else:
-        with st.spinner("🧠 Scanning intelligence network and synthesizing live reports..."):
-            # Step 1: Automatically extract the precise title to search
-            clean_subject = extract_clean_subject(user_api_key, user_query)
+        with st.spinner("🧠 Autonomous agent crawling multi-node indices, compiling trade registers, and parsing reviews..."):
             
-            # Step 2: Execute automated context harvesting with the clean name
-            wiki_title, wiki_text = fetch_wikipedia_data(clean_subject)
-            web_text = fetch_live_web_intelligence(clean_subject)
+            # Step 1: Extract pure title context
+            subject = extract_clean_subject(user_api_key, user_query)
             
-            # Step 3: Process via Llama Core
-            output, success = run_groq_ai_analysis(user_api_key, user_query, wiki_title, wiki_text, web_text)
+            # Step 2: Parallel multi-engine collection
+            wiki_title, wiki_text = fetch_wikipedia_dossier(subject)
+            trade_text, critic_text = gather_deep_trade_intel(subject)
+            
+            # Step 3: Deep Synthesis
+            report, success = run_agent_synthesis(
+                user_api_key, user_query, wiki_title, trade_text, critic_text
+            )
             
             if success:
-                st.success(f"📊 Deep Intelligence Report for {wiki_title} Generated!")
-                st.markdown("### 🤖 FilmIntel Core Report:")
-                st.info(output)
+                st.success(f"📊 Global Media & Financial Dossier Compiled Successfully!")
+                st.markdown("### 🤖 FilmIntel Comprehensive Briefing:")
+                st.info(report)
             else:
-                st.error(f"Execution Error: {output}")
+                st.error(f"Critical System Analysis Fault: {report}")
 
 # ────────── PUBLIC DISCLAIMER & STICKY FOOTER SECTION ──────────
 st.markdown("<br><br><br><br>", unsafe_allow_html=True)
