@@ -132,13 +132,30 @@ def execute_targeted_crawl(query):
 
 @st.cache_data(show_spinner=False)
 def gather_deep_trade_intel(subject):
-    q1 = f"{subject} movie box office collections budget profit loss OTT streaming rights partner news"
+    # --- EXPANDED DATA SOURCE ENGINE ---
+    # We explicitly target the most trusted trade, tracking, and review databases in India
+    trade_domains = (
+        "site:variety.com OR site:hollywoodreporter.com OR " # Global Industry Standards
+        "site:hindustantimes.com OR site:indianexpress.com OR site:timesofindia.indiatimes.com OR " # Mainstream Indian Media
+        "site:123telugu.com OR site:greatandhra.com OR site:gulte.com OR " # Tollywood Registries
+        "site:pinkvilla.com OR site:bollywoodhungama.com OR site:koimoi.com" # Box Office Trackers
+    )
+    
+    # Query 1: Hard Financials & Distribution Assets
+    q1 = f"{subject} movie box office collection budget profit loss OTT rights distribution tracker {trade_domains}"
     trade_intel = execute_targeted_crawl(q1)
     
-    q2 = f"{subject} review rating critical response analysis site:123telugu.com OR site:pinkvilla.com OR site:bollywoodhungama.com"
+    # Query 2: Creative Execution & Critical Metrics
+    q2 = f"{subject} review rating analysis performance critical reception verdict {trade_domains}"
     critic_intel = execute_targeted_crawl(q2)
     
-    return trade_intel, critic_intel
+    # --- TOKEN GUARD SYSTEM ---
+    # To protect your Groq TPM limits from getting crushed during testing,
+    # we enforce a strict character ceiling on the raw crawled data before passing to the LLM.
+    safe_trade_intel = trade_intel[:4000]   # Roughly 800 tokens max
+    safe_critic_intel = critic_intel[:4000] # Roughly 800 tokens max
+    
+    return safe_trade_intel, safe_critic_intel
 
 # 🤖 AGENT MODULE 3: Multi-Hat Ecosystem Synthesis Core
 def run_ecosystem_synthesis(api_key, user_query, role, subject, wiki_data, trade_data, critic_data):
