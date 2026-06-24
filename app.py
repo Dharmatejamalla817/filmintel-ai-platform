@@ -248,7 +248,7 @@ if st.button("🚀 Execute High-Speed Intelligence Scan"):
                 user_api_key, user_query, user_role, wiki_title, wiki_text, trade_text, critic_text
             )
             
-           if success:
+            if success:
                 st.success(f"📊 {user_role} Intelligence Briefing Compiled Successfully!")
                 
                 # Create visual tabs to split raw text insights from structured data tables
@@ -283,7 +283,6 @@ if st.button("🚀 Execute High-Speed Intelligence Scan"):
                         st.caption(trade_text)
             else:
                 st.error(f"Critical System Analysis Fault: {report}")
-
 # ────────── PUBLIC DISCLAIMER & STICKY FOOTER SECTION ──────────
 st.markdown("<br><br><br><br>", unsafe_allow_html=True)
 
