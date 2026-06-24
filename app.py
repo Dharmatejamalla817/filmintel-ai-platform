@@ -12,7 +12,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# 🖌️ Custom CSS Branding & Premium UI Layout
+# 🖌_ Custom CSS Branding & Premium UI Layout
 st.markdown("""
     <style>
         #MainMenu {visibility: hidden;}
@@ -51,23 +51,25 @@ try:
 except:
     SYSTEM_GROQ_KEY = ""
 
+# ⚙_ Secure API Authentication Box (Left inside sidebar out of sight)
 with st.sidebar:
     st.header("🔑 System Access")
     use_custom_key = st.checkbox("🔑 Use my own Groq API Key")
     user_api_key = st.text_input("Enter personal Groq Key:", type="password") if use_custom_key else SYSTEM_GROQ_KEY
-    
     st.markdown("---")
-    
-    # 🎩 NEW FEATURE: ECOSYSTEM TARGET SELECTOR
-    st.header("🎯 Workspace Mode")
-    user_role = st.selectbox(
-        "Select your industry role:",
-        ["🍿 Audience & Super-Fan", "💼 Producer & Director (B2B)", "🎭 Actor & Crew Marketplace", "📰 News Reporter & Critic"]
-    )
-    
-    st.markdown("---")
-    
-    # Creator Attribution
+    st.info("🧠 **Autonomous Critic Agent Online:** Operating with deep semantic multi-node routing grids.")
+
+# 🎩 MOVED TO MAIN PAGE: ECOSYSTEM TARGET SELECTOR
+st.markdown("### 🎯 Select Workspace Mode")
+user_role = st.selectbox(
+    "Choose your industry perspective to dynamically route the AI's core capabilities:",
+    ["🍿 Audience & Super-Fan", "💼 Producer & Director (B2B)", "🎭 Actor & Crew Marketplace", "📰 News Reporter & Critic"]
+)
+
+st.markdown("---")
+
+# Creator Attribution Panel on Main Page side or Sidebar
+with st.sidebar:
     st.markdown("""
         <div style='background-color: #1e1e1e; padding: 10px; border-radius: 5px; border-left: 3px solid #ff4b4b;'>
             <small style='color: #fff; font-weight: bold;'>👨‍💻 Architect Info:</small><br>
@@ -82,7 +84,6 @@ with st.sidebar:
     """, unsafe_allow_html=True)
 
 # --- INJECTED MOCK DATA BASES FOR MARKETPLACE MATCHING ---
-# In a full release, this connects to a database. For this upgrade, it simulates the capability instantly.
 MOCK_CREW_DB = """
 [PORTFOLIO ID 101] Name: Sai Kumar; Role: Cinematographer; Location: Hyderabad; Experience: Low-light tracking, rustic action, dark themes; Availability: Free August 2026; Budget: 5 Lakhs/project.
 [PORTFOLIO ID 102] Name: Anjali Rao; Role: VFX Coordinator; Location: Hyderabad; Experience: CGI integration, mythological assets, green screen; Availability: Free July 2026; Budget: 8 Lakhs/project.
@@ -96,9 +97,7 @@ def extract_clean_subject(api_key, raw_query):
         prompt = f"""Analyze the user's input: "{raw_query}".
         Isolate the precise name of the Indian movie, web series, actor, or director.
         Respond with ONLY the clean title/name. No symbols, no punctuation, no sentences.
-        Example: "can you give me the budget of pushpa 2 rule movie" -> Pushpa 2: The Rule
-        Example: "tell me about prabhas remuneration" -> Prabhas"""
-        
+        """
         completion = client.chat.completions.create(
             messages=[{"role": "user", "content": prompt}],
             model="llama-3.3-70b-versatile",
@@ -109,7 +108,7 @@ def extract_clean_subject(api_key, raw_query):
     except:
         return raw_query
 
-# 🛠️ AGENT MODULE 2: Deep Context Harvesting Network
+# 🛠_ AGENT MODULE 2: Deep Context Harvesting Network
 @st.cache_data(show_spinner=False)
 def fetch_wikipedia_dossier(search_term):
     wiki_agent = wikipediaapi.Wikipedia(
@@ -143,31 +142,30 @@ def gather_deep_trade_intel(subject):
 
 # 🤖 AGENT MODULE 3: Multi-Hat Ecosystem Synthesis Core
 def run_ecosystem_synthesis(api_key, user_query, role, subject, wiki_data, trade_data, critic_data):
-    # Adjust instructions dynamically based on the selected target persona
     if role == "💼 Producer & Director (B2B)":
         system_focus = f"""
-        You are an elite, B2B Hollywood/Tollywood financial and logistical analyst. 
-        Focus heavily on providing complete logistical analytics, instant market research reports, budget structures, and profit-and-loss assessments.
-        If the user uploads script lines or concept fragments, provide an automated breakdown of required locations, cast tracking, and estimated production requirements.
+        You are an elite, B2B financial and logistical analyst for the film business. 
+        Focus heavily on providing complete logistical analytics, investment risk profiles, budget scales, and profit-and-loss balances.
+        If the user inputs a script concept or plot scene outline, automatically break it down into production needs (locations required, cast overhead, and scheduling logic).
         """
     elif role == "🎭 Actor & Crew Marketplace":
         system_focus = f"""
         You are the ultimate Talent Matching AI for cinema networks. 
-        Cross-reference the query against our internal talent pool database context to vet and match candidates for casting calls, lighting crews, or VFX directors based on location, availability, and style.
+        Cross-reference the user's request directly against our talent database to suggest, rank, and vet the perfect candidates based on location, rate parameters, and experience.
         
         INTERNAL TALENT POOL DATABASE CONTEXT:
         {MOCK_CREW_DB}
         """
     elif role == "📰 News Reporter & Critic":
         system_focus = """
-        You are a high-speed facts desk agent for journalists and cinematic critics.
-        Focus on extreme mathematical precision, trend spotting, record tracking, and fact-checking. 
-        Always attempt to construct structured comparison data tables summarizing box-office jumps or records that a reporter can immediately copy-paste into an article.
+        You are a high-speed facts desk agent for media reporters and journalists.
+        Focus on extreme structural data accuracy, trend spotting, record tracking, and fact-checking. 
+        Always generate clean comparison text tables organizing the facts so a reporter can copy-paste them directly into a breaking news article.
         """
-    else: # Default Audience & Super-Fan
+    else:
         system_focus = """
         You are a hyper-personalized, conversational cinema discovery guide for fans.
-        Aggregate the web sentiment from social mentions and reviews to answer why audiences love or dislike elements of this subject, offering clear, digestible summaries.
+        Aggregate public and media sentiment to explain why audiences love or dislike elements of this subject, providing clear bulleted takeaways.
         """
 
     prompt = f"""
@@ -185,7 +183,7 @@ def run_ecosystem_synthesis(api_key, user_query, role, subject, wiki_data, trade
     [DATAFEED 3: JOURNALISTIC MEDIA REVIEWS & CRITIC RATINGS]
     {critic_data}
     
-    Deliver a comprehensive, professional output formatted beautifully with bold Markdown headers.
+    Deliver a comprehensive, professional output formatted beautifully with bold Markdown headers. Do not guess blindly.
     """
     
     try:
@@ -199,9 +197,9 @@ def run_ecosystem_synthesis(api_key, user_query, role, subject, wiki_data, trade
     except Exception as e:
         return str(e), False
 
-# Unified Single Input Interface
+# Unified Single Input Interface (Changes layout dynamically based on role selection)
 if user_role == "💼 Producer & Director (B2B)":
-    user_query = st.text_area("🔍 Paste your Script Concept / Treatment Outline, or ask a logistical/financial question:")
+    user_query = st.text_area("🎬 Paste your Script Concept / Treatment Outline, or ask a logistical/financial question:")
 else:
     user_query = st.text_input(f"🔍 [{user_role}] Search anything or ask a question:")
 
