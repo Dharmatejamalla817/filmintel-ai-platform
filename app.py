@@ -42,7 +42,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.title("🎬 Indian FilmIntel AI Platform")
-st.subheader("Enterprise Agent Edition: Deep Multi-Engine Cinema Intelligence")
+st.subheader("Enterprise Ecosystem Edition: Multi-Hat Cinema Intelligence Workspace")
 st.markdown("---")
 
 # Load secure system key for Groq
@@ -57,7 +57,15 @@ with st.sidebar:
     user_api_key = st.text_input("Enter personal Groq Key:", type="password") if use_custom_key else SYSTEM_GROQ_KEY
     
     st.markdown("---")
-    st.info("🧠 **Autonomous Critic Agent Online:** This engine uses recursive query expansion to target Indian trade registries, box-office ledgers, and critical reviews across multiple nodes simultaneously.")
+    
+    # 🎩 NEW FEATURE: ECOSYSTEM TARGET SELECTOR
+    st.header("🎯 Workspace Mode")
+    user_role = st.selectbox(
+        "Select your industry role:",
+        ["🍿 Audience & Super-Fan", "💼 Producer & Director (B2B)", "🎭 Actor & Crew Marketplace", "📰 News Reporter & Critic"]
+    )
+    
+    st.markdown("---")
     
     # Creator Attribution
     st.markdown("""
@@ -72,6 +80,14 @@ with st.sidebar:
         Powered by Groq Cloud Systems.
         </small>
     """, unsafe_allow_html=True)
+
+# --- INJECTED MOCK DATA BASES FOR MARKETPLACE MATCHING ---
+# In a full release, this connects to a database. For this upgrade, it simulates the capability instantly.
+MOCK_CREW_DB = """
+[PORTFOLIO ID 101] Name: Sai Kumar; Role: Cinematographer; Location: Hyderabad; Experience: Low-light tracking, rustic action, dark themes; Availability: Free August 2026; Budget: 5 Lakhs/project.
+[PORTFOLIO ID 102] Name: Anjali Rao; Role: VFX Coordinator; Location: Hyderabad; Experience: CGI integration, mythological assets, green screen; Availability: Free July 2026; Budget: 8 Lakhs/project.
+[PORTFOLIO ID 103] Name: R. Narayanan; Role: Line Producer; Location: Chennai; Experience: Mid-budget schedules, location scouting, European permissions; Availability: Immediate; Budget: 10 Lakhs/project.
+"""
 
 # 🧠 AGENT MODULE 1: Self-Correcting Subject Extractor
 def extract_clean_subject(api_key, raw_query):
@@ -125,19 +141,42 @@ def gather_deep_trade_intel(subject):
     
     return trade_intel, critic_intel
 
-# 🤖 AGENT MODULE 3: Elite Cinema Synthesis Core
-@st.cache_data(show_spinner=False)
-def run_agent_synthesis(api_key, user_query, subject, wiki_data, trade_data, critic_data):
+# 🤖 AGENT MODULE 3: Multi-Hat Ecosystem Synthesis Core
+def run_ecosystem_synthesis(api_key, user_query, role, subject, wiki_data, trade_data, critic_data):
+    # Adjust instructions dynamically based on the selected target persona
+    if role == "💼 Producer & Director (B2B)":
+        system_focus = f"""
+        You are an elite, B2B Hollywood/Tollywood financial and logistical analyst. 
+        Focus heavily on providing complete logistical analytics, instant market research reports, budget structures, and profit-and-loss assessments.
+        If the user uploads script lines or concept fragments, provide an automated breakdown of required locations, cast tracking, and estimated production requirements.
+        """
+    elif role == "🎭 Actor & Crew Marketplace":
+        system_focus = f"""
+        You are the ultimate Talent Matching AI for cinema networks. 
+        Cross-reference the query against our internal talent pool database context to vet and match candidates for casting calls, lighting crews, or VFX directors based on location, availability, and style.
+        
+        INTERNAL TALENT POOL DATABASE CONTEXT:
+        {MOCK_CREW_DB}
+        """
+    elif role == "📰 News Reporter & Critic":
+        system_focus = """
+        You are a high-speed facts desk agent for journalists and cinematic critics.
+        Focus on extreme mathematical precision, trend spotting, record tracking, and fact-checking. 
+        Always attempt to construct structured comparison data tables summarizing box-office jumps or records that a reporter can immediately copy-paste into an article.
+        """
+    else: # Default Audience & Super-Fan
+        system_focus = """
+        You are a hyper-personalized, conversational cinema discovery guide for fans.
+        Aggregate the web sentiment from social mentions and reviews to answer why audiences love or dislike elements of this subject, offering clear, digestible summaries.
+        """
+
     prompt = f"""
-    You are the premier, industry-leading AI cinema business consultant and entertainment analyst for Indian Cinema.
-    Your mission is to answer the user's query with complete data, absolute precision, and zero placeholder guessing.
+    {system_focus}
     
     User Query: {user_query}
     Target Subject: {subject}
     
-    You have been supplied with deep text packages directly scraped from the web:
-    
-    [DATAFEED 1: SYSTEM ENCYCLOPEDIA RECORDS]
+    [DATAFEED 1: ENCYCLOPEDIA RECORDS]
     {wiki_data}
     
     [DATAFEED 2: FINANCIAL TRADE REGISTRY & OTT TRACKING]
@@ -146,15 +185,7 @@ def run_agent_synthesis(api_key, user_query, subject, wiki_data, trade_data, cri
     [DATAFEED 3: JOURNALISTIC MEDIA REVIEWS & CRITIC RATINGS]
     {critic_data}
     
-    System Instructions:
-    1. Cross-reference all datafeeds. Do not state that information is missing if it exists in ANY of the datafeeds. 
-    2. Build a high-tier, professional analysis dossier using clear, bold headings and structured bullet points.
-    3. Include dedicated deep-dive sections covering:
-       - 🎬 Cast & Production Crew Lineup (with relevant performance reviews or remuneration tracking if present).
-       - 💰 Financial Performance Balance Sheet (Budget metrics vs. Total Domestic/Global Box Office Gross collections).
-       - 📺 Digital & OTT Distribution Assets (Explicitly list streaming partners like Netflix, Prime Video, Aha, Zee5, Hotstar and digital rights value details).
-       - 📈 Critical Consensus & Media Ratings Summary.
-    4. If details diverge across trade papers, present them comparatively like an enterprise auditor. Never summarize lazily.
+    Deliver a comprehensive, professional output formatted beautifully with bold Markdown headers.
     """
     
     try:
@@ -162,22 +193,25 @@ def run_agent_synthesis(api_key, user_query, subject, wiki_data, trade_data, cri
         chat_completion = client.chat.completions.create(
             messages=[{"role": "user", "content": prompt}],
             model="llama-3.3-70b-versatile",
-            temperature=0.1
+            temperature=0.2
         )
         return chat_completion.choices[0].message.content, True
     except Exception as e:
         return str(e), False
 
 # Unified Single Input Interface
-user_query = st.text_input("🔍 Search for any Indian Movie, Web Series, Actor, or ask a custom question:")
+if user_role == "💼 Producer & Director (B2B)":
+    user_query = st.text_area("🔍 Paste your Script Concept / Treatment Outline, or ask a logistical/financial question:")
+else:
+    user_query = st.text_input(f"🔍 [{user_role}] Search anything or ask a question:")
 
-if st.button("🚀 Run Comprehensive Intelligence Scan"):
+if st.button("🚀 Execute High-Speed Intelligence Scan"):
     if not user_api_key:
         st.error("Please ensure your Groq API Key is actively connected in the configuration panel.")
     elif not user_query:
-        st.warning("Please input a movie title, celebrity profile, or industry topic to begin.")
+        st.warning("Please enter a query or script outline to trigger the processing nodes.")
     else:
-        with st.spinner("🧠 Autonomous agent crawling multi-node indices, compiling trade registers, and parsing reviews..."):
+        with st.spinner(f"🧠 FilmIntel Ecosystem routing query via specialized [{user_role}] parameters..."):
             
             # Step 1: Extract pure title context
             subject = extract_clean_subject(user_api_key, user_query)
@@ -186,14 +220,14 @@ if st.button("🚀 Run Comprehensive Intelligence Scan"):
             wiki_title, wiki_text = fetch_wikipedia_dossier(subject)
             trade_text, critic_text = gather_deep_trade_intel(subject)
             
-            # Step 3: Deep Synthesis (FIXED: passing wiki_text instead of wiki_title into the text block parameter)
-            report, success = run_agent_synthesis(
-                user_api_key, user_query, wiki_title, wiki_text, trade_text, critic_text
+            # Step 3: Multi-Hat Dynamic Synthesis
+            report, success = run_ecosystem_synthesis(
+                user_api_key, user_query, user_role, wiki_title, wiki_text, trade_text, critic_text
             )
             
             if success:
-                st.success(f"📊 Global Media & Financial Dossier Compiled Successfully!")
-                st.markdown("### 🤖 FilmIntel Comprehensive Briefing:")
+                st.success(f"📊 {user_role} Intelligence Briefing Compiled Successfully!")
+                st.markdown(f"### 🤖 FilmIntel Core Report ({user_role}):")
                 st.info(report)
             else:
                 st.error(f"Critical System Analysis Fault: {report}")
