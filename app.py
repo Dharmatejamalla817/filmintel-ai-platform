@@ -132,28 +132,24 @@ def execute_targeted_crawl(query):
 
 @st.cache_data(show_spinner=False)
 def gather_deep_trade_intel(subject):
-    # --- EXPANDED DATA SOURCE ENGINE ---
-    # We explicitly target the most trusted trade, tracking, and review databases in India
+    # Expanded domain registry targeting trade, casting calls, tech crew portfolios, and production news
     trade_domains = (
-        "site:variety.com OR site:hollywoodreporter.com OR " # Global Industry Standards
-        "site:hindustantimes.com OR site:indianexpress.com OR site:timesofindia.indiatimes.com OR " # Mainstream Indian Media
-        "site:123telugu.com OR site:greatandhra.com OR site:gulte.com OR " # Tollywood Registries
-        "site:pinkvilla.com OR site:bollywoodhungama.com OR site:koimoi.com" # Box Office Trackers
+        "site:variety.com OR site:hollywoodreporter.com OR site:imdb.com OR "
+        "site:123telugu.com OR site:greatandhra.com OR site:gulte.com OR "
+        "site:pinkvilla.com OR site:bollywoodhungama.com OR site:filmfare.com"
     )
     
-    # Query 1: Hard Financials & Distribution Assets
-    q1 = f"{subject} movie box office collection budget profit loss OTT rights distribution tracker {trade_domains}"
+    # Query 1: Hard Financials, Casting Announcements, and Crew Attachments
+    q1 = f"{subject} cast crew director cinematographer vfx supervisor technician availability assignment movie {trade_domains}"
     trade_intel = execute_targeted_crawl(q1)
     
-    # Query 2: Creative Execution & Critical Metrics
-    q2 = f"{subject} review rating analysis performance critical reception verdict {trade_domains}"
+    # Query 2: Review aggregations and profile tracking
+    q2 = f"{subject} portfolio career profile salary remuneration news review verdict {trade_domains}"
     critic_intel = execute_targeted_crawl(q2)
     
-    # --- TOKEN GUARD SYSTEM ---
-    # To protect your Groq TPM limits from getting crushed during testing,
-    # we enforce a strict character ceiling on the raw crawled data before passing to the LLM.
-    safe_trade_intel = trade_intel[:4000]   # Roughly 800 tokens max
-    safe_critic_intel = critic_intel[:4000] # Roughly 800 tokens max
+    # Token Guard System to protect your Groq limits
+    safe_trade_intel = trade_intel[:4000]
+    safe_critic_intel = critic_intel[:4000]
     
     return safe_trade_intel, safe_critic_intel
 
@@ -175,11 +171,15 @@ def run_ecosystem_synthesis(api_key, user_query, role, subject, wiki_data, trade
         """
     elif role == "🎭 Actor & Crew Marketplace":
         system_focus = f"""
-        You are the ultimate Talent Matching AI for cinema networks. 
-        Cross-reference the user's request directly against our talent database to suggest, rank, and vet the perfect candidates based on location, rate parameters, and experience.
+        You are an elite, enterprise-grade Talent Acquisition Executive and Casting Director for global and Indian cinema. 
+        Your mission is to analyze the user's specific casting or technical crew request and provide a comprehensive, vetted talent matching report based on live data feeds.
         
-        INTERNAL TALENT POOL DATABASE CONTEXT:
-        {MOCK_CREW_DB}
+        Using the real-time trade documents provided below, you must:
+        1. 👥 **VERIFIED TALENT MATCHES:** Extract and list prominent actors, cinematographers, VFX supervisors, or crew members who perfectly align with the user's creative request.
+        2. 📈 **INDUSTRY RATING & RECENT PORTFOLIO:** Highlight their most recent film credits, specific technical style, or performance accolades discussed in recent trade articles.
+        3. 💼 **MARKET VALUE & STATUS:** Assess their current trade demand, scale parameters, and industry value tier based on recent media buzz and production announcements.
+        
+        Do not rely on outdated data; extract their current 2026 project standings strictly from the live feeds. If exact metrics are unavailable, suggest industry-standard technical alternatives matching the profile.
         """
     elif role == "📰 News Reporter & Critic":
         system_focus = """
