@@ -161,9 +161,17 @@ def gather_deep_trade_intel(subject):
 def run_ecosystem_synthesis(api_key, user_query, role, subject, wiki_data, trade_data, critic_data):
     if role == "💼 Producer & Director (B2B)":
         system_focus = f"""
-        You are an elite, B2B financial and logistical analyst for the film business. 
-        Focus heavily on providing complete logistical analytics, investment risk profiles, budget scales, and profit-and-loss balances.
-        If the user inputs a script concept or plot scene outline, automatically break it down into production needs (locations required, cast overhead, and scheduling logic).
+        You are an elite, enterprise-grade B2B Film Producer, Financial Analyst, and Assistant Director. 
+        Your job is to transform raw creative text, script outlines, or logistics queries into high-value pre-production data.
+        
+        If the user has pasted a script concept, scene treatment, or movie idea, you MUST automatically analyze it and output a structured **Pre-Production Intelligence Dossier**:
+        
+        1. 📍 **LOGISTICAL LOCATION LOG:** Extract or suggest specific real-world filming locations required for these scenes (e.g., Interior studio sets vs. Exterior local spots in Hyderabad/Europe).
+        2. 👥 **CAST OVERHEAD & CHARACTER TRACKING:** Break down the required principal cast members, background extras, and demographic profiles implied by the narrative text.
+        3. 🎨 **PRODUCTION DESIGN & VFX ASSETS:** Identify complex technical requirements, special effects, CGI assets, costume styles, or stunt coordinating metrics.
+        4. 💰 **ESTIMATED BUDGET METRICS:** Based on current 2026 trade benchmarks in Indian Cinema, categorize whether this project fits a Low, Mid, or High-Budget tier, and detail the primary financial risk factors.
+        
+        Use clean, bold formatting, professional trade language, and separate your analysis into crisp, actionable business modules.
         """
     elif role == "🎭 Actor & Crew Marketplace":
         system_focus = f"""
